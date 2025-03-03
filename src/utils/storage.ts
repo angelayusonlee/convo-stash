@@ -1,9 +1,9 @@
-
 import { ChatConversation, ApiConfig } from '../types/chat';
 
 const CONVERSATIONS_KEY = 'chat-conversations';
 const CURRENT_CONVERSATION_KEY = 'current-conversation-id';
 const API_CONFIG_KEY = 'api-config';
+const ADMIN_API_CONFIG_KEY = 'admin-api-config';
 
 export const saveApiConfig = (config: ApiConfig): void => {
   localStorage.setItem(API_CONFIG_KEY, JSON.stringify(config));
@@ -12,6 +12,24 @@ export const saveApiConfig = (config: ApiConfig): void => {
 export const getApiConfig = (): ApiConfig | null => {
   const config = localStorage.getItem(API_CONFIG_KEY);
   return config ? JSON.parse(config) : null;
+};
+
+export const saveAdminApiConfig = (config: ApiConfig): void => {
+  localStorage.setItem(ADMIN_API_CONFIG_KEY, JSON.stringify(config));
+};
+
+export const getAdminApiConfig = (): ApiConfig | null => {
+  const config = localStorage.getItem(ADMIN_API_CONFIG_KEY);
+  return config ? JSON.parse(config) : null;
+};
+
+export const getEffectiveApiConfig = (): ApiConfig | null => {
+  // First try to get admin config, fall back to user config if not available
+  const adminConfig = getAdminApiConfig();
+  if (adminConfig) {
+    return adminConfig;
+  }
+  return getApiConfig();
 };
 
 export const saveConversation = (conversation: ChatConversation): void => {
