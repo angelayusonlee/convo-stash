@@ -1,5 +1,6 @@
 
 import { ApiConfig, ChatMessage } from '../types/chat';
+import { getEffectiveApiConfig } from './storage';
 
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -8,6 +9,11 @@ export const callChatApi = async (
   config: ApiConfig
 ): Promise<string> => {
   try {
+    // Validate API key
+    if (!config || !config.apiKey) {
+      throw new Error('No auth credentials found');
+    }
+
     // Format messages for the API (removing unnecessary fields)
     const apiMessages = messages.map(({ role, content }) => ({
       role,
@@ -43,6 +49,10 @@ export const callChatApi = async (
 
 export const getAvailableModels = async (apiKey: string): Promise<string[]> => {
   try {
+    if (!apiKey) {
+      throw new Error('API key is required to fetch models');
+    }
+
     const response = await fetch('https://openrouter.ai/api/v1/models', {
       method: 'GET',
       headers: {

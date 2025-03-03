@@ -17,7 +17,8 @@ import {
   getCurrentConversationId,
   setCurrentConversationId,
   getConversation,
-  deleteConversation
+  deleteConversation,
+  getEffectiveApiConfig
 } from '@/utils/storage';
 import { callChatApi } from '@/utils/openai';
 
@@ -34,7 +35,7 @@ const ChatWindow: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   useEffect(() => {
-    const config = getApiConfig();
+    const config = getEffectiveApiConfig();
     setApiConfig(config);
     
     if (!config) {
@@ -90,11 +91,18 @@ const ChatWindow: React.FC = () => {
   
   const handleApiConfigSaved = (config: ApiConfig) => {
     setApiConfig(config);
-    saveApiConfig(config);
   };
   
   const handleSendMessage = async () => {
-    if (!input.trim() || isLoading || !apiConfig) return;
+    if (!input.trim() || isLoading) return;
+    
+    const effectiveConfig = getEffectiveApiConfig();
+    
+    if (!effectiveConfig) {
+      toast.error("API configuration is missing. Please set up your API key.");
+      setShowApiModal(true);
+      return;
+    }
     
     if (!currentConversation) {
       createNewConversation();
@@ -121,7 +129,7 @@ const ChatWindow: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const response = await callChatApi(updatedMessages, apiConfig);
+      const response = await callChatApi(updatedMessages, effectiveConfig);
       
       const assistantMessage: ChatMessageType = {
         id: uuidv4(),

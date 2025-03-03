@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import ChatWindow from '@/components/ChatWindow';
 import { Toaster } from '@/components/ui/sonner';
-import { getAdminApiConfig } from '@/utils/storage';
+import { getEffectiveApiConfig, getAdminApiConfig } from '@/utils/storage';
 import { Badge } from '@/components/ui/badge';
 
 const Index = () => {
@@ -12,6 +12,22 @@ const Index = () => {
     // Check if admin config is being used
     const adminConfig = getAdminApiConfig();
     setIsUsingAdminConfig(!!adminConfig);
+
+    // Set up a listener to check for storage changes
+    const handleStorageChange = () => {
+      const adminConfig = getAdminApiConfig();
+      setIsUsingAdminConfig(!!adminConfig);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Check every 2 seconds in case localStorage was modified by the same window
+    const intervalId = setInterval(handleStorageChange, 2000);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(intervalId);
+    };
   }, []);
 
   return (
