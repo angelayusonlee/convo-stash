@@ -1,8 +1,6 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { IconButton } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Settings, Send, Download, Trash, PlusCircle } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
@@ -35,7 +33,6 @@ const ChatWindow: React.FC = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  // Initialize app data on load
   useEffect(() => {
     const config = getApiConfig();
     setApiConfig(config);
@@ -47,7 +44,6 @@ const ChatWindow: React.FC = () => {
     loadConversations();
   }, []);
   
-  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [currentConversation?.messages]);
@@ -69,7 +65,6 @@ const ChatWindow: React.FC = () => {
       }
     }
     
-    // If no current conversation or it doesn't exist, create a new one
     if (allConversations.length > 0) {
       setCurrentConversation(allConversations[0]);
       setCurrentConversationId(allConversations[0].id);
@@ -113,7 +108,6 @@ const ChatWindow: React.FC = () => {
       timestamp: Date.now()
     };
     
-    // Update conversation with user message
     const updatedMessages = [...(currentConversation.messages || []), userMessage];
     const updatedConversation = {
       ...currentConversation,
@@ -125,7 +119,6 @@ const ChatWindow: React.FC = () => {
     saveConversation(updatedConversation);
     setInput('');
     
-    // Get AI response
     setIsLoading(true);
     try {
       const response = await callChatApi(updatedMessages, apiConfig);
@@ -137,7 +130,6 @@ const ChatWindow: React.FC = () => {
         timestamp: Date.now()
       };
       
-      // Update conversation with assistant response
       const finalMessages = [...updatedMessages, assistantMessage];
       const finalConversation = {
         ...updatedConversation,
@@ -165,7 +157,6 @@ const ChatWindow: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setInput(e.target.value);
     
-    // Auto-resize textarea
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
@@ -226,7 +217,6 @@ const ChatWindow: React.FC = () => {
   
   return (
     <div className="chat-container">
-      {/* Header */}
       <div className="flex justify-between items-center p-4 border-b">
         <div className="flex items-center space-x-2">
           <Button 
@@ -271,12 +261,10 @@ const ChatWindow: React.FC = () => {
         </div>
       </div>
       
-      {/* Messages */}
       <div className="chat-messages">
         {renderMessages()}
       </div>
       
-      {/* Input */}
       <div className="chat-input-container">
         <div className="relative max-w-4xl mx-auto">
           <Textarea
@@ -304,7 +292,6 @@ const ChatWindow: React.FC = () => {
         )}
       </div>
       
-      {/* Modals */}
       <ApiKeyModal 
         open={showApiModal} 
         onOpenChange={setShowApiModal} 
