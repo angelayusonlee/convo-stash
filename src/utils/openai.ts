@@ -25,11 +25,16 @@ export const callChatApi = async (
       messages: apiMessages
     });
 
+    // Format the Authorization header - ensure it has "Bearer " prefix
+    const authHeader = config.apiKey.startsWith('Bearer ') 
+      ? config.apiKey 
+      : `Bearer ${config.apiKey}`;
+
     const response = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${config.apiKey}`,
+        'Authorization': authHeader,
         'HTTP-Referer': window.location.origin,
         'X-Title': 'Qualtrics Survey Chat Interface'
       },

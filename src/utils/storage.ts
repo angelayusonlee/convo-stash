@@ -5,7 +5,7 @@ const CONVERSATIONS_KEY = 'chat-conversations';
 const CURRENT_CONVERSATION_KEY = 'current-conversation-id';
 const API_CONFIG_KEY = 'api-config';
 
-// New function to get embedded data from Qualtrics
+// Get embedded data from Qualtrics
 export const getQualtricsEmbeddedData = (): Record<string, string> => {
   try {
     // Check if we're in a Qualtrics environment
@@ -36,9 +36,16 @@ export const saveApiConfig = (config: ApiConfig): void => {
 export const getApiConfig = (): ApiConfig | null => {
   // First try to get from Qualtrics embedded data
   const embeddedData = getQualtricsEmbeddedData();
-  if (embeddedData.apiKey) {
+  
+  // Look for the OpenRouterAPI variable specifically
+  if (embeddedData.OpenRouterAPI) {
+    // Extract the API key, removing "Bearer " prefix if present
+    const apiKey = embeddedData.OpenRouterAPI.startsWith('Bearer ') 
+      ? embeddedData.OpenRouterAPI.substring(7) 
+      : embeddedData.OpenRouterAPI;
+      
     return {
-      apiKey: embeddedData.apiKey,
+      apiKey: apiKey,
       model: embeddedData.model || 'openai/gpt-4o-mini'
     };
   }
