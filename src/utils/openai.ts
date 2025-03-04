@@ -31,7 +31,7 @@ export const callChatApi = async (
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${config.apiKey}`,
         'HTTP-Referer': window.location.origin,
-        'X-Title': 'ChatGPT Clone'
+        'X-Title': 'Qualtrics Survey Chat Interface'
       },
       body: JSON.stringify({
         model: config.model,

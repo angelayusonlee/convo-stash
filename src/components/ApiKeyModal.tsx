@@ -4,10 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import { ApiConfig } from '@/types/chat';
-import { saveApiConfig, getApiConfig, saveAdminApiConfig, getAdminApiConfig } from '@/utils/storage';
+import { saveApiConfig, getApiConfig, getQualtricsEmbeddedData } from '@/utils/storage';
 import { getAvailableModels } from '@/utils/openai';
 
 interface ApiKeyModalProps {
@@ -19,28 +18,36 @@ interface ApiKeyModalProps {
 const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConfigSaved }) => {
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('openai/gpt-4o-mini');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
   const [availableModels, setAvailableModels] = useState<string[]>([
     'openai/gpt-4o-mini',
     'openai/gpt-4o'
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [qualtricsDataFound, setQualtricsDataFound] = useState(false);
 
   useEffect(() => {
-    // Check for admin config first
-    const adminConfig = getAdminApiConfig();
-    if (adminConfig) {
-      setApiKey(adminConfig.apiKey);
-      setModel(adminConfig.model);
-      setIsAdmin(true);
+    // Check for Qualtrics embedded data first
+    const embeddedData = getQualtricsEmbeddedData();
+    if (embeddedData.apiKey) {
+      setApiKey(embeddedData.apiKey);
+      if (embeddedData.model) {
+        setModel(embeddedData.model);
+      }
+      setQualtricsDataFound(true);
       
-      // Fetch available models for admin
-      fetchModels(adminConfig.apiKey);
+      // If we have data from Qualtrics, save it and close the modal
+      const config: ApiConfig = {
+        apiKey: embeddedData.apiKey,
+        model: embeddedData.model || 'openai/gpt-4o-mini'
+      };
+      
+      saveApiConfig(config);
+      onApiConfigSaved(config);
+      fetchModels(embeddedData.apiKey);
       return;
     }
     
-    // Otherwise fall back to user config
+    // Otherwise fall back to stored config
     const config = getApiConfig();
     if (config) {
       setApiKey(config.apiKey);
@@ -51,7 +58,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
         fetchModels(config.apiKey);
       }
     }
-  }, [open]);
+  }, [open, onApiConfigSaved]);
 
   const fetchModels = async (key: string) => {
     try {
@@ -76,22 +83,8 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
       model
     };
     
-    if (isAdmin) {
-      // If admin mode, verify password (for simplicity, we're using a static password)
-      // In a real app, you'd want a more secure authentication mechanism
-      if (adminPassword.trim() === "admin123") {
-        saveAdminApiConfig(config);
-        toast.success("Admin API configuration saved successfully!");
-      } else {
-        toast.error("Invalid admin password");
-        setIsLoading(false);
-        return;
-      }
-    } else {
-      // Regular user config
-      saveApiConfig(config);
-      toast.success("API configuration saved successfully!");
-    }
+    saveApiConfig(config);
+    toast.success("API configuration saved successfully!");
     
     onApiConfigSaved(config);
     setIsLoading(false);
@@ -106,13 +99,12 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
     setModel(value);
   };
 
-  const handleAdminModeToggle = (checked: boolean) => {
-    setIsAdmin(checked);
-  };
-
-  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAdminPassword(e.target.value);
-  };
+  // If we got data from Qualtrics, don't show the modal
+  useEffect(() => {
+    if (qualtricsDataFound && open) {
+      onOpenChange(false);
+    }
+  }, [qualtricsDataFound, open, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -125,31 +117,6 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
-          <div className="flex items-center space-x-2">
-            <Switch 
-              id="admin-mode" 
-              checked={isAdmin} 
-              onCheckedChange={handleAdminModeToggle}
-            />
-            <Label htmlFor="admin-mode">Admin Mode</Label>
-          </div>
-          
-          {isAdmin && (
-            <div className="grid gap-2">
-              <Label htmlFor="adminPassword">Admin Password</Label>
-              <Input
-                id="adminPassword"
-                type="password"
-                placeholder="Enter admin password"
-                value={adminPassword}
-                onChange={handlePasswordChange}
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Enter admin password to save this API key for all users.
-              </p>
-            </div>
-          )}
-          
           <div className="grid gap-2">
             <Label htmlFor="apiKey">OpenRouter API Key</Label>
             <Input
@@ -187,7 +154,7 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
             Cancel
           </Button>
           <Button type="submit" onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "Saving..." : (isAdmin ? "Save Admin Configuration" : "Save Configuration")}
+            {isLoading ? "Saving..." : "Save Configuration"}
           </Button>
         </DialogFooter>
       </DialogContent>

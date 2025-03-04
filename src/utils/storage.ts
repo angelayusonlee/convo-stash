@@ -1,34 +1,54 @@
+
 import { ChatConversation, ApiConfig } from '../types/chat';
 
 const CONVERSATIONS_KEY = 'chat-conversations';
 const CURRENT_CONVERSATION_KEY = 'current-conversation-id';
 const API_CONFIG_KEY = 'api-config';
-const ADMIN_API_CONFIG_KEY = 'admin-api-config';
+
+// New function to get embedded data from Qualtrics
+export const getQualtricsEmbeddedData = (): Record<string, string> => {
+  try {
+    // Check if we're in a Qualtrics environment
+    if (typeof window !== 'undefined' && window.Qualtrics) {
+      return window.Qualtrics.SurveyEngine.getEmbeddedData() || {};
+    }
+    
+    // For development or non-Qualtrics environments, check URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const apiKey = params.get('apiKey');
+    const model = params.get('model');
+    
+    const data: Record<string, string> = {};
+    if (apiKey) data.apiKey = apiKey;
+    if (model) data.model = model;
+    
+    return data;
+  } catch (error) {
+    console.error('Error accessing Qualtrics embedded data:', error);
+    return {};
+  }
+};
 
 export const saveApiConfig = (config: ApiConfig): void => {
   localStorage.setItem(API_CONFIG_KEY, JSON.stringify(config));
 };
 
 export const getApiConfig = (): ApiConfig | null => {
+  // First try to get from Qualtrics embedded data
+  const embeddedData = getQualtricsEmbeddedData();
+  if (embeddedData.apiKey) {
+    return {
+      apiKey: embeddedData.apiKey,
+      model: embeddedData.model || 'openai/gpt-4o-mini'
+    };
+  }
+  
+  // Fall back to stored config if no embedded data is found
   const config = localStorage.getItem(API_CONFIG_KEY);
   return config ? JSON.parse(config) : null;
 };
 
-export const saveAdminApiConfig = (config: ApiConfig): void => {
-  localStorage.setItem(ADMIN_API_CONFIG_KEY, JSON.stringify(config));
-};
-
-export const getAdminApiConfig = (): ApiConfig | null => {
-  const config = localStorage.getItem(ADMIN_API_CONFIG_KEY);
-  return config ? JSON.parse(config) : null;
-};
-
 export const getEffectiveApiConfig = (): ApiConfig | null => {
-  // First try to get admin config, fall back to user config if not available
-  const adminConfig = getAdminApiConfig();
-  if (adminConfig) {
-    return adminConfig;
-  }
   return getApiConfig();
 };
 
