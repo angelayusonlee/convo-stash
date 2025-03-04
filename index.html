@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -12,32 +13,6 @@
   <body>
     <div id="root"></div>
     
-    <script>
-      function sendQualtricsData() {
-        var embeddedData = {
-          OpenRouterAPIKey: "${e://Field/OpenRouterAPIKey}",
-          OpenAIEndpoint: "${e://Field/OpenAIEndpoint}",
-          setModel: "${e://Field/setModel}",
-          participantId: "${e://Field/participantId}"
-        };
-
-        var iframe = document.getElementById("chatbot-frame");
-        if (iframe) {
-          iframe.contentWindow.postMessage(embeddedData, "*");
-        }
-      }
-
-      window.onload = sendQualtricsData;
-    </script>
-
-    <iframe
-      id="chatbot-frame"
-      src="https://your-vercel-app.vercel.app"
-      width="100%"
-      height="600px"
-      style="border: none;">
-    </iframe>
-
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
