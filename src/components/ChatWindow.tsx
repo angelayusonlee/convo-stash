@@ -189,7 +189,7 @@ const ChatWindow: React.FC = () => {
     if (!currentConversation || !currentConversation.messages.length) {
       return (
         <div className="flex flex-col items-center justify-center h-full text-center p-8">
-          <h2 className="text-2xl font-semibold mb-4">Welcome to ChatGPT Clone</h2>
+          <h2 className="text-2xl font-semibold mb-4">Welcome</h2>
           <p className="text-muted-foreground max-w-md mb-8">
             Start a conversation with the AI assistant by typing a message below.
           </p>
