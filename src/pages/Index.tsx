@@ -4,11 +4,19 @@ import ChatWindow from '@/components/ChatWindow';
 import { Toaster } from '@/components/ui/sonner';
 import { getEffectiveApiConfig, getAdminApiConfig } from '@/utils/storage';
 import { Badge } from '@/components/ui/badge';
+import ApiKeyModal from '@/components/ApiKeyModal';
 
 const Index = () => {
   const [isUsingAdminConfig, setIsUsingAdminConfig] = useState(false);
+  const [showApiModal, setShowApiModal] = useState(false);
 
   useEffect(() => {
+    // Check if API config exists
+    const effectiveConfig = getEffectiveApiConfig();
+    if (!effectiveConfig) {
+      setShowApiModal(true);
+    }
+
     // Check if admin config is being used
     const adminConfig = getAdminApiConfig();
     setIsUsingAdminConfig(!!adminConfig);
@@ -30,6 +38,13 @@ const Index = () => {
     };
   }, []);
 
+  const handleApiConfigSaved = () => {
+    setShowApiModal(false);
+    // Force refresh isUsingAdminConfig
+    const adminConfig = getAdminApiConfig();
+    setIsUsingAdminConfig(!!adminConfig);
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-0 relative">
       {isUsingAdminConfig && (
@@ -41,6 +56,11 @@ const Index = () => {
       )}
       <ChatWindow />
       <Toaster position="top-center" />
+      <ApiKeyModal 
+        open={showApiModal} 
+        onOpenChange={setShowApiModal} 
+        onApiConfigSaved={handleApiConfigSaved} 
+      />
     </div>
   );
 };

@@ -38,11 +38,16 @@ const ChatWindow: React.FC = () => {
     const config = getEffectiveApiConfig();
     setApiConfig(config);
     
-    if (!config) {
-      setShowApiModal(true);
-    }
-    
     loadConversations();
+    
+    const intervalId = setInterval(() => {
+      const newConfig = getEffectiveApiConfig();
+      if (JSON.stringify(newConfig) !== JSON.stringify(apiConfig)) {
+        setApiConfig(newConfig);
+      }
+    }, 2000);
+    
+    return () => clearInterval(intervalId);
   }, []);
   
   useEffect(() => {
