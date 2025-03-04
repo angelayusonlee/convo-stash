@@ -1,3 +1,4 @@
+
 import { ChatConversation, ApiConfig } from '../types/chat';
 
 const CONVERSATIONS_KEY = 'chat-conversations';
@@ -9,8 +10,10 @@ const SESSION_STARTED_KEY = 'session-started';
 export const getQualtricsEmbeddedData = (): Record<string, string> => {
   try {
     // Check if we're in a Qualtrics environment
-    if (typeof window !== 'undefined' && window.Qualtrics) {
-      return window.Qualtrics.SurveyEngine.getEmbeddedData() || {};
+    if (typeof window !== 'undefined' && window.Qualtrics && window.Qualtrics.SurveyEngine.getEmbeddedData) {
+      const data = window.Qualtrics.SurveyEngine.getEmbeddedData() || {};
+      console.log('Retrieved Qualtrics embedded data:', data);
+      return data;
     }
     
     // For development or non-Qualtrics environments, check URL parameters
@@ -41,6 +44,8 @@ export const getApiConfig = (): ApiConfig | null => {
   
   // Check for the OpenRouterAPI variable
   if (embeddedData.OpenRouterAPI) {
+    console.log('Found OpenRouterAPI in embedded data');
+    
     // Extract the API key, removing "Bearer " prefix if present
     const apiKey = embeddedData.OpenRouterAPI.startsWith('Bearer ') 
       ? embeddedData.OpenRouterAPI.substring(7) 
@@ -51,12 +56,18 @@ export const getApiConfig = (): ApiConfig | null => {
     
     // Get model from embedded data or use default
     const model = embeddedData.setModel || 'openai/gpt-4o-mini';
-      
-    return {
+    
+    // Create and save the config to localStorage
+    const config = {
       apiKey: apiKey,
       model: model,
       endpoint: endpoint
     };
+    
+    // Save to localStorage for future reference
+    saveApiConfig(config);
+    
+    return config;
   }
   
   // Fall back to stored config if no embedded data is found
@@ -71,12 +82,18 @@ export const getEffectiveApiConfig = (): ApiConfig | null => {
 // Update chatHistory embedded data in Qualtrics
 export const updateChatHistoryInQualtrics = (conversation: ChatConversation): void => {
   try {
-    if (typeof window !== 'undefined' && window.Qualtrics && window.Qualtrics.SurveyEngine.setEmbeddedData) {
-      // Convert the full conversation to a JSON string to store in chatHistory
-      const chatHistoryJson = JSON.stringify(conversation);
-      window.Qualtrics.SurveyEngine.setEmbeddedData('chatHistory', chatHistoryJson);
+    if (typeof window !== 'undefined' && window.Qualtrics && window.Qualtrics.SurveyEngine) {
+      // Check if setEmbeddedData method exists
+      if (typeof window.Qualtrics.SurveyEngine.setEmbeddedData === 'function') {
+        // Convert the full conversation to a JSON string to store in chatHistory
+        const chatHistoryJson = JSON.stringify(conversation);
+        window.Qualtrics.SurveyEngine.setEmbeddedData('chatHistory', chatHistoryJson);
+        console.log('Updated Qualtrics chatHistory with:', conversation.messages.length, 'messages');
+      } else {
+        console.log('Qualtrics setEmbeddedData method not available');
+      }
     } else {
-      console.log('Qualtrics setEmbeddedData not available - running in development mode');
+      console.log('Qualtrics SurveyEngine not available - running in development mode');
     }
   } catch (error) {
     console.error('Error updating Qualtrics chatHistory:', error);
