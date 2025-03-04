@@ -30,6 +30,11 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
   useEffect(() => {
     // Check for URL parameters first
     const urlParams = getUrlParameters();
+    console.log("ApiKeyModal: URL parameters:", { 
+      apiKey: urlParams.OpenRouterAPI ? "Present (masked)" : "Not present",
+      participantId: urlParams.participantId || "Not present"
+    });
+    
     if (urlParams.OpenRouterAPI) {
       const apiKey = urlParams.OpenRouterAPI.startsWith('Bearer ') 
         ? urlParams.OpenRouterAPI.substring(7) 
@@ -53,6 +58,12 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
         model: urlParams.setModel || 'openai/gpt-4o-mini',
         endpoint: urlParams.OpenAIEndpoint || null
       };
+      
+      // Store the participant ID in local storage if provided
+      if (urlParams.participantId) {
+        localStorage.setItem('participantId', urlParams.participantId);
+        console.log("ApiKeyModal: Stored participant ID:", urlParams.participantId);
+      }
       
       saveApiConfig(config);
       onApiConfigSaved(config);

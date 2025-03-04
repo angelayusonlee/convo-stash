@@ -38,6 +38,12 @@ const ChatWindow: React.FC = () => {
     const config = getEffectiveApiConfig();
     setApiConfig(config);
     
+    // Log the participant ID if available
+    const participantId = localStorage.getItem('participantId');
+    if (participantId) {
+      console.log("ChatWindow: Participant ID:", participantId);
+    }
+    
     loadConversations();
     
     const intervalId = setInterval(() => {

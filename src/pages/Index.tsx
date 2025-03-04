@@ -11,7 +11,10 @@ const Index = () => {
   useEffect(() => {
     // Check for URL parameters first
     const urlParams = getUrlParameters();
-    console.log("Index: Checking for URL parameters", urlParams);
+    console.log("Index: URL parameters detected:", { 
+      apiKey: urlParams.OpenRouterAPI ? "Present (masked)" : "Not present",
+      participantId: urlParams.participantId || "Not present"
+    });
     
     // Only show API modal if no API key in URL parameters AND no stored config
     if (!urlParams.OpenRouterAPI) {

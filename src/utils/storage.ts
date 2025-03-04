@@ -1,4 +1,3 @@
-
 import { ChatConversation, ApiConfig } from '../types/chat';
 
 const CONVERSATIONS_KEY = 'chat-conversations';
@@ -12,11 +11,20 @@ export const getUrlParameters = (): Record<string, string> => {
     // Check URL parameters
     const params = new URLSearchParams(window.location.search);
     const apiKey = params.get('apiKey');
+    const participantId = params.get('participantId');
     const model = params.get('model');
     const endpoint = params.get('endpoint');
     
+    console.log("URL parameters detected:", { 
+      apiKey: apiKey ? "Present (masked)" : "Not present", 
+      participantId, 
+      model, 
+      endpoint 
+    });
+    
     const data: Record<string, string> = {};
     if (apiKey) data.OpenRouterAPI = apiKey;
+    if (participantId) data.participantId = participantId;
     if (model) data.setModel = model;
     if (endpoint) data.OpenAIEndpoint = endpoint;
     
