@@ -20,4 +20,5 @@ export interface ChatConversation {
 export interface ApiConfig {
   apiKey: string;
   model: string;
+  endpoint?: string | null;
 }

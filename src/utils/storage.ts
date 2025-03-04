@@ -1,4 +1,3 @@
-
 import { ChatConversation, ApiConfig } from '../types/chat';
 
 const CONVERSATIONS_KEY = 'chat-conversations';
@@ -17,10 +16,12 @@ export const getQualtricsEmbeddedData = (): Record<string, string> => {
     const params = new URLSearchParams(window.location.search);
     const apiKey = params.get('apiKey');
     const model = params.get('model');
+    const endpoint = params.get('endpoint');
     
     const data: Record<string, string> = {};
-    if (apiKey) data.apiKey = apiKey;
-    if (model) data.model = model;
+    if (apiKey) data.OpenRouterAPI = apiKey;
+    if (model) data.setModel = model;
+    if (endpoint) data.OpenAIEndpoint = endpoint;
     
     return data;
   } catch (error) {
@@ -37,16 +38,23 @@ export const getApiConfig = (): ApiConfig | null => {
   // First try to get from Qualtrics embedded data
   const embeddedData = getQualtricsEmbeddedData();
   
-  // Look for the OpenRouterAPI variable specifically
+  // Check for the OpenRouterAPI variable
   if (embeddedData.OpenRouterAPI) {
     // Extract the API key, removing "Bearer " prefix if present
     const apiKey = embeddedData.OpenRouterAPI.startsWith('Bearer ') 
       ? embeddedData.OpenRouterAPI.substring(7) 
       : embeddedData.OpenRouterAPI;
+    
+    // Get endpoint from embedded data or use default
+    const endpoint = embeddedData.OpenAIEndpoint || null;
+    
+    // Get model from embedded data or use default
+    const model = embeddedData.setModel || 'openai/gpt-4o-mini';
       
     return {
       apiKey: apiKey,
-      model: embeddedData.model || 'openai/gpt-4o-mini'
+      model: model,
+      endpoint: endpoint
     };
   }
   
@@ -57,6 +65,19 @@ export const getApiConfig = (): ApiConfig | null => {
 
 export const getEffectiveApiConfig = (): ApiConfig | null => {
   return getApiConfig();
+};
+
+// Update chatHistory embedded data in Qualtrics
+export const updateChatHistoryInQualtrics = (conversation: ChatConversation): void => {
+  try {
+    if (typeof window !== 'undefined' && window.Qualtrics) {
+      // Convert the full conversation to a JSON string to store in chatHistory
+      const chatHistoryJson = JSON.stringify(conversation);
+      window.Qualtrics.SurveyEngine.setEmbeddedData('chatHistory', chatHistoryJson);
+    }
+  } catch (error) {
+    console.error('Error updating Qualtrics chatHistory:', error);
+  }
 };
 
 export const saveConversation = (conversation: ChatConversation): void => {
@@ -71,6 +92,9 @@ export const saveConversation = (conversation: ChatConversation): void => {
   
   localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
   setCurrentConversationId(conversation.id);
+  
+  // Update Qualtrics chatHistory
+  updateChatHistoryInQualtrics(conversation);
 };
 
 export const getConversations = (): ChatConversation[] => {

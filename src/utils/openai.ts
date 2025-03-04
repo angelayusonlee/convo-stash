@@ -1,8 +1,8 @@
-
 import { ApiConfig, ChatMessage } from '../types/chat';
 import { getEffectiveApiConfig } from './storage';
 
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+// Default endpoint that will be used if none is provided
+const DEFAULT_OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 export const callChatApi = async (
   messages: ChatMessage[], 
@@ -20,7 +20,11 @@ export const callChatApi = async (
       content
     }));
 
-    console.log('Sending request to OpenRouter:', {
+    // Use endpoint from config or fall back to default
+    const apiUrl = config.endpoint || DEFAULT_OPENROUTER_API_URL;
+
+    console.log('Sending request to API:', {
+      url: apiUrl,
       model: config.model,
       messages: apiMessages
     });
@@ -30,7 +34,7 @@ export const callChatApi = async (
       ? config.apiKey 
       : `Bearer ${config.apiKey}`;
 
-    const response = await fetch(OPENROUTER_API_URL, {
+    const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -48,20 +52,20 @@ export const callChatApi = async (
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenRouter API error:', errorText);
+      console.error('API error:', errorText);
       try {
         const errorData = JSON.parse(errorText);
-        throw new Error(errorData.error?.message || `Error ${response.status}: Failed to get response from OpenRouter`);
+        throw new Error(errorData.error?.message || `Error ${response.status}: Failed to get response from API`);
       } catch (e) {
-        throw new Error(`Error ${response.status}: ${errorText || 'Failed to get response from OpenRouter'}`);
+        throw new Error(`Error ${response.status}: ${errorText || 'Failed to get response from API'}`);
       }
     }
 
     const data = await response.json();
-    console.log('OpenRouter response:', data);
+    console.log('API response:', data);
     
     if (!data.choices || !data.choices.length) {
-      throw new Error('Invalid response format from OpenRouter API');
+      throw new Error('Invalid response format from API');
     }
 
     return data.choices[0]?.message?.content || '';
