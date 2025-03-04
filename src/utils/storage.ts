@@ -6,17 +6,10 @@ const CURRENT_CONVERSATION_KEY = 'current-conversation-id';
 const API_CONFIG_KEY = 'api-config';
 const SESSION_STARTED_KEY = 'session-started';
 
-// Get embedded data from Qualtrics
-export const getQualtricsEmbeddedData = (): Record<string, string> => {
+// Get configuration from URL parameters (for development testing)
+export const getUrlParameters = (): Record<string, string> => {
   try {
-    // Check if we're in a Qualtrics environment
-    if (typeof window !== 'undefined' && window.Qualtrics && window.Qualtrics.SurveyEngine.getEmbeddedData) {
-      const data = window.Qualtrics.SurveyEngine.getEmbeddedData() || {};
-      console.log('Retrieved Qualtrics embedded data:', data);
-      return data;
-    }
-    
-    // For development or non-Qualtrics environments, check URL parameters
+    // Check URL parameters
     const params = new URLSearchParams(window.location.search);
     const apiKey = params.get('apiKey');
     const model = params.get('model');
@@ -29,7 +22,7 @@ export const getQualtricsEmbeddedData = (): Record<string, string> => {
     
     return data;
   } catch (error) {
-    console.error('Error accessing Qualtrics embedded data:', error);
+    console.error('Error accessing URL parameters:', error);
     return {};
   }
 };
@@ -39,23 +32,23 @@ export const saveApiConfig = (config: ApiConfig): void => {
 };
 
 export const getApiConfig = (): ApiConfig | null => {
-  // First try to get from Qualtrics embedded data
-  const embeddedData = getQualtricsEmbeddedData();
+  // First try to get from URL parameters
+  const urlParams = getUrlParameters();
   
   // Check for the OpenRouterAPI variable
-  if (embeddedData.OpenRouterAPI) {
-    console.log('Found OpenRouterAPI in embedded data');
+  if (urlParams.OpenRouterAPI) {
+    console.log('Found OpenRouterAPI in URL parameters');
     
     // Extract the API key, removing "Bearer " prefix if present
-    const apiKey = embeddedData.OpenRouterAPI.startsWith('Bearer ') 
-      ? embeddedData.OpenRouterAPI.substring(7) 
-      : embeddedData.OpenRouterAPI;
+    const apiKey = urlParams.OpenRouterAPI.startsWith('Bearer ') 
+      ? urlParams.OpenRouterAPI.substring(7) 
+      : urlParams.OpenRouterAPI;
     
-    // Get endpoint from embedded data or use default
-    const endpoint = embeddedData.OpenAIEndpoint || null;
+    // Get endpoint from URL parameters or use default
+    const endpoint = urlParams.OpenAIEndpoint || null;
     
-    // Get model from embedded data or use default
-    const model = embeddedData.setModel || 'openai/gpt-4o-mini';
+    // Get model from URL parameters or use default
+    const model = urlParams.setModel || 'openai/gpt-4o-mini';
     
     // Create and save the config to localStorage
     const config = {
@@ -70,34 +63,13 @@ export const getApiConfig = (): ApiConfig | null => {
     return config;
   }
   
-  // Fall back to stored config if no embedded data is found
+  // Fall back to stored config if no URL parameters are found
   const config = localStorage.getItem(API_CONFIG_KEY);
   return config ? JSON.parse(config) : null;
 };
 
 export const getEffectiveApiConfig = (): ApiConfig | null => {
   return getApiConfig();
-};
-
-// Update chatHistory embedded data in Qualtrics
-export const updateChatHistoryInQualtrics = (conversation: ChatConversation): void => {
-  try {
-    if (typeof window !== 'undefined' && window.Qualtrics && window.Qualtrics.SurveyEngine) {
-      // Check if setEmbeddedData method exists
-      if (window.Qualtrics.SurveyEngine.setEmbeddedData) {
-        // Convert the full conversation to a JSON string to store in chatHistory
-        const chatHistoryJson = JSON.stringify(conversation);
-        window.Qualtrics.SurveyEngine.setEmbeddedData('chatHistory', chatHistoryJson);
-        console.log('Updated Qualtrics chatHistory with:', conversation.messages.length, 'messages');
-      } else {
-        console.log('Qualtrics setEmbeddedData method not available');
-      }
-    } else {
-      console.log('Qualtrics SurveyEngine not available - running in development mode');
-    }
-  } catch (error) {
-    console.error('Error updating Qualtrics chatHistory:', error);
-  }
 };
 
 // Check if this is a new session
@@ -131,9 +103,6 @@ export const saveConversation = (conversation: ChatConversation): void => {
   
   localStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
   setCurrentConversationId(conversation.id);
-  
-  // Update Qualtrics chatHistory
-  updateChatHistoryInQualtrics(conversation);
 };
 
 export const getConversations = (): ChatConversation[] => {

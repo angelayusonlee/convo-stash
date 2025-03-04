@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { ApiConfig } from '@/types/chat';
-import { saveApiConfig, getApiConfig, getQualtricsEmbeddedData } from '@/utils/storage';
+import { saveApiConfig, getApiConfig, getUrlParameters } from '@/utils/storage';
 import { getAvailableModels } from '@/utils/openai';
 
 interface ApiKeyModalProps {
@@ -25,33 +25,33 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
     'openai/gpt-4o'
   ]);
   const [isLoading, setIsLoading] = useState(false);
-  const [qualtricsDataFound, setQualtricsDataFound] = useState(false);
+  const [urlParamsFound, setUrlParamsFound] = useState(false);
 
   useEffect(() => {
-    // Check for Qualtrics embedded data first
-    const embeddedData = getQualtricsEmbeddedData();
-    if (embeddedData.OpenRouterAPI) {
-      const apiKey = embeddedData.OpenRouterAPI.startsWith('Bearer ') 
-        ? embeddedData.OpenRouterAPI.substring(7) 
-        : embeddedData.OpenRouterAPI;
+    // Check for URL parameters first
+    const urlParams = getUrlParameters();
+    if (urlParams.OpenRouterAPI) {
+      const apiKey = urlParams.OpenRouterAPI.startsWith('Bearer ') 
+        ? urlParams.OpenRouterAPI.substring(7) 
+        : urlParams.OpenRouterAPI;
       
       setApiKey(apiKey);
       
-      if (embeddedData.setModel) {
-        setModel(embeddedData.setModel);
+      if (urlParams.setModel) {
+        setModel(urlParams.setModel);
       }
       
-      if (embeddedData.OpenAIEndpoint) {
-        setEndpoint(embeddedData.OpenAIEndpoint);
+      if (urlParams.OpenAIEndpoint) {
+        setEndpoint(urlParams.OpenAIEndpoint);
       }
       
-      setQualtricsDataFound(true);
+      setUrlParamsFound(true);
       
-      // If we have data from Qualtrics, save it and close the modal
+      // If we have data from URL, save it and close the modal
       const config: ApiConfig = {
         apiKey: apiKey,
-        model: embeddedData.setModel || 'openai/gpt-4o-mini',
-        endpoint: embeddedData.OpenAIEndpoint || null
+        model: urlParams.setModel || 'openai/gpt-4o-mini',
+        endpoint: urlParams.OpenAIEndpoint || null
       };
       
       saveApiConfig(config);
@@ -118,12 +118,12 @@ const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ open, onOpenChange, onApiConf
     setEndpoint(e.target.value);
   };
 
-  // If we got data from Qualtrics, don't show the modal
+  // If we got data from URL parameters, don't show the modal
   useEffect(() => {
-    if (qualtricsDataFound && open) {
+    if (urlParamsFound && open) {
       onOpenChange(false);
     }
-  }, [qualtricsDataFound, open, onOpenChange]);
+  }, [urlParamsFound, open, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
