@@ -1,9 +1,9 @@
-
 import { ChatConversation, ApiConfig } from '../types/chat';
 
 const CONVERSATIONS_KEY = 'chat-conversations';
 const CURRENT_CONVERSATION_KEY = 'current-conversation-id';
 const API_CONFIG_KEY = 'api-config';
+const SESSION_STARTED_KEY = 'session-started';
 
 // Get embedded data from Qualtrics
 export const getQualtricsEmbeddedData = (): Record<string, string> => {
@@ -83,7 +83,26 @@ export const updateChatHistoryInQualtrics = (conversation: ChatConversation): vo
   }
 };
 
+// Check if this is a new session
+const isNewSession = (): boolean => {
+  const sessionStarted = localStorage.getItem(SESSION_STARTED_KEY);
+  if (!sessionStarted) {
+    localStorage.setItem(SESSION_STARTED_KEY, Date.now().toString());
+    return true;
+  }
+  return false;
+};
+
+// Clear previous conversations if it's a new session
+const initializeNewSession = (): void => {
+  if (isNewSession()) {
+    localStorage.removeItem(CONVERSATIONS_KEY);
+    localStorage.removeItem(CURRENT_CONVERSATION_KEY);
+  }
+};
+
 export const saveConversation = (conversation: ChatConversation): void => {
+  initializeNewSession(); // Initialize if needed
   const conversations = getConversations();
   const existingIndex = conversations.findIndex(c => c.id === conversation.id);
   
@@ -101,6 +120,7 @@ export const saveConversation = (conversation: ChatConversation): void => {
 };
 
 export const getConversations = (): ChatConversation[] => {
+  initializeNewSession(); // Initialize if needed
   const conversations = localStorage.getItem(CONVERSATIONS_KEY);
   return conversations ? JSON.parse(conversations) : [];
 };
