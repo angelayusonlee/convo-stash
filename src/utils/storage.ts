@@ -84,7 +84,7 @@ export const updateChatHistoryInQualtrics = (conversation: ChatConversation): vo
   try {
     if (typeof window !== 'undefined' && window.Qualtrics && window.Qualtrics.SurveyEngine) {
       // Check if setEmbeddedData method exists
-      if (typeof window.Qualtrics.SurveyEngine.setEmbeddedData === 'function') {
+      if (window.Qualtrics.SurveyEngine.setEmbeddedData) {
         // Convert the full conversation to a JSON string to store in chatHistory
         const chatHistoryJson = JSON.stringify(conversation);
         window.Qualtrics.SurveyEngine.setEmbeddedData('chatHistory', chatHistoryJson);
