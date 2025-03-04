@@ -6,6 +6,7 @@ interface QualtricsEmbeddedData {
 interface QualtricsEngine {
   SurveyEngine: {
     getEmbeddedData(): Record<string, string>;
+    setEmbeddedData(name: string, value: string): void;
   }
 }
 

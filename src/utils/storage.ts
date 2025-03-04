@@ -1,3 +1,4 @@
+
 import { ChatConversation, ApiConfig } from '../types/chat';
 
 const CONVERSATIONS_KEY = 'chat-conversations';
@@ -70,10 +71,12 @@ export const getEffectiveApiConfig = (): ApiConfig | null => {
 // Update chatHistory embedded data in Qualtrics
 export const updateChatHistoryInQualtrics = (conversation: ChatConversation): void => {
   try {
-    if (typeof window !== 'undefined' && window.Qualtrics) {
+    if (typeof window !== 'undefined' && window.Qualtrics && window.Qualtrics.SurveyEngine.setEmbeddedData) {
       // Convert the full conversation to a JSON string to store in chatHistory
       const chatHistoryJson = JSON.stringify(conversation);
       window.Qualtrics.SurveyEngine.setEmbeddedData('chatHistory', chatHistoryJson);
+    } else {
+      console.log('Qualtrics setEmbeddedData not available - running in development mode');
     }
   } catch (error) {
     console.error('Error updating Qualtrics chatHistory:', error);
