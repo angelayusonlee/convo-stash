@@ -8,4 +8,13 @@ interface QualtricsWindow extends Window {
   };
 }
 
-declare const window: QualtricsWindow;
+declare global {
+  interface Window {
+    Qualtrics?: {
+      SurveyEngine: {
+        getEmbeddedData: () => Record<string, string>;
+        setEmbeddedData?: (name: string, value: string) => void;
+      };
+    };
+  }
+}
